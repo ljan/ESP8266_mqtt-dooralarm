@@ -32,11 +32,13 @@
 
 // include
 #include <ESP8266WiFi.h>
+#include <ArduinoOTA.h>
 #include <PubSubClient.h> //mqtt
 
 // variables
 const int sleepTimeS = 2;
 unsigned long loopTimeS = 5;
+volatile int buttoncounter = 0;
 volatile bool alarm = false;
 volatile bool unarm = false;
 volatile bool check = false;
@@ -60,7 +62,7 @@ void setup()
   pinMode(REEDPIN, INPUT);
   pinMode(BUTTONPIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(BUTTONPIN), button_ISR, FALLING);
-  
+
   dbprint("Reed: ");
   if(digitalRead(REEDPIN))
   {
@@ -68,7 +70,7 @@ void setup()
     gotodeepsleep(sleepTimeS); // 86 ms to get here
   }
 //  else  // jumpstart WIFI after WAKE_RF_DISABLED
-//  {
+//  {     // takes too long, not usefull
 //    unsigned long test = millis();
 //    WiFi.forceSleepBegin();
 //    while(millis()-test < 15000)
@@ -135,6 +137,20 @@ void loop()
   {
     client.publish(ARM_TOPIC, "0", true);
   }
+  
+  if(buttoncounter > 5)
+  {
+    dbprintln("Button at least 5 times pressed, starting OTA");
+    setup_ota();
+    last = millis();
+    while(millis()-last < 60*1e3)
+    {
+      ArduinoOTA.handle();
+      yield();
+      delay(200);
+    }
+    dbprintln("waited 60 seconds, ending OTA");
+  }
 
   digitalWrite(BUZZERPIN, 0);
   dbprintln("door closed, no alarm");
@@ -154,6 +170,7 @@ void button_ISR()
     unarm = true;
     alarm = false;
   }
+  buttoncounter++;
 }
 
 void setup_wifi()
@@ -185,6 +202,33 @@ void setup_wifi()
   dbprintln(WiFi.localIP());
 }
 
+void setup_ota()
+{
+//    ArduinoOTA.setHostname(DEFAULT_HOSTNAME);
+//    ArduinoOTA.setPassword((const char *)"esp8266");
+    
+    ArduinoOTA.onStart([]()
+    {
+      dbprintln("Start");
+    });
+    ArduinoOTA.onEnd([]()
+    {
+      dbprintln("\nEnd");
+    });
+
+    ArduinoOTA.onError([](ota_error_t error)
+    {
+      dbprint("Error[%u]: ");dbprintln(error);
+      if (error == OTA_AUTH_ERROR) dbprintln("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) dbprintln("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) dbprintln("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) dbprintln("Receive Failed");
+      else if (error == OTA_END_ERROR) dbprintln("End Failed");
+    });
+    ArduinoOTA.begin();
+    dbprintln("Ready - OTA Success!!!");
+}
+
 void reconnect_mqtt()
 {
   // Loop until door is closed
@@ -209,7 +253,8 @@ void reconnect_mqtt()
   }
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length)
+{
   dbprint("Message arrived [");
   dbprint(topic);
   dbprint("] ");
