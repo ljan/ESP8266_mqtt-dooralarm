@@ -1,41 +1,10 @@
-// Setup
-#define DEFAULT_SSID      "ssid"              // Enter your network SSID
-#define DEFAULT_PASSWORD  "pwd"            // Enter your network WPA key
-#define DEFAULT_HOSTNAME  "maindoor"                     // Enter your device friendly name
-
-#define MQTT_SERVER       "server"
-#define MQTT_USER         "user"
-#define MQTT_PASSWORD     "pwd"
-
-#define REED_TOPIC        "maindoor/reed/switch"
-#define BATTERY_TOPIC     "maindoor/battery/analog"
-#define ARM_TOPIC         "maindoor/arm/cmd"
-
-#define VCC_ADJ  1.225
-
-// Pin Setup
-#define REEDPIN 4     // D2
-#define BUZZERPIN 14  // D5
-#define BUTTONPIN 0   // D3
-
-// DEGUB
-#define DEBUG
-#ifdef DEBUG
- #define dbprint(x)  Serial.print(x)
- #define dbprintln(x)  Serial.println(x)
- #define dbserialbegin(x) Serial.begin(x);
-#else
- #define dbprint(x)
- #define dbprintln(x)
- #define dbserialbegin(x)
-#endif
-
-// include
 #include <ESP8266WiFi.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h> //mqtt
 
-// variables
+#include "config.h"
+#include "debug.h"
+
 const int sleepTimeS = 2;
 unsigned long loopTimeS = 5;
 volatile int buttoncounter = 0;
