@@ -19,4 +19,4 @@
 #define BUTTONPIN 0   // D3 -- uses internal Pull-Up
 
 // Debugging
-//#define DEBUG
+#define DEBUG
