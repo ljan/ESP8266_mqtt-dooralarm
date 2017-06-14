@@ -14,9 +14,9 @@
 #define VCC_ADJ  1.225
 
 // Pin Setup
-#define REEDPIN 4     // D2
-#define BUZZERPIN 14  // D5
-#define BUTTONPIN 0   // D3
+#define REEDPIN 4     // D2 -- needs Pull-Down
+#define BUZZERPIN 14  // D5 -- needs Pull-Down
+#define BUTTONPIN 0   // D3 -- uses internal Pull-Up
 
 // Debugging
 //#define DEBUG

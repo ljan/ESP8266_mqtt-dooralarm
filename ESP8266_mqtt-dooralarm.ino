@@ -1,12 +1,12 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoOTA.h>
-#include <PubSubClient.h> //mqtt
+#include <PubSubClient.h>
 
 #include "config.h"
 #include "debug.h"
 
-const int sleepTimeS = 2;
-unsigned long loopTimeS = 5;
+const int sleepTimeS = 1;       // Time in Deep-Sleep between checks
+unsigned long loopTimeS = 5;    // Time between checks when door ist open
 volatile int buttoncounter = 0;
 volatile bool alarm = false;
 volatile bool unarm = false;
@@ -15,11 +15,12 @@ volatile bool check = false;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-ADC_MODE(ADC_VCC); // Read internal vcc rather than voltage on ADC pin (A0 must be floating)
+ADC_MODE(ADC_VCC);  // Read internal vcc rather than voltage on ADC pin (A0 must be floating)
 
+// *******SETUP*******
+// periodically check if door is open and go back to sleep, when open go to loop()
 void setup()
 {
-  // put your setup code here, to run once:
   dbserialbegin(115200);
   dbprintln("");
   dbprintln("");
@@ -27,8 +28,9 @@ void setup()
   dbprint("VCC Voltage: ");
   dbprintln(ESP.getVcc()*VCC_ADJ/1024.00f);
 
-  pinMode(BUZZERPIN, OUTPUT);
   pinMode(REEDPIN, INPUT);
+  pinMode(BUZZERPIN, OUTPUT);
+  digitalWrite(BUZZERPIN, LOW);
   pinMode(BUTTONPIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(BUTTONPIN), button_ISR, FALLING);
 
@@ -38,28 +40,13 @@ void setup()
     dbprintln("closed, going back to sleep");
     gotodeepsleep(sleepTimeS); // 86 ms to get here
   }
-//  else  // jumpstart WIFI after WAKE_RF_DISABLED
-//  {     // takes too long, not usefull
-//    unsigned long test = millis();
-//    WiFi.forceSleepBegin();
-//    while(millis()-test < 15000)
-//    {
-//      yield();
-//      delay(200);
-//      dbprint(":");
-//    }
-//    WiFi.forceSleepWake();
-//    test = millis();
-//    while(millis()-test < 30000)
-//    {
-//      yield();
-//      delay(200);
-//      dbprint(";");
-//    }
-//  }
 }
 //*************** end setup *****************************
 
+// *******LOOP*******
+// start wifi, connect mqtt and check if arm_topic is set, loop till door is closed again and publish "1" to reed_topic
+// when armed toggle buzzer, falling edge on button unarms, 5 times pressed ota is initiated
+// after door is closed publish "0" to reed_topic and batteryvoltage to battery_topic and go back to sleep
 void loop()
 {
   dbprintln("open, begin loop");
@@ -251,8 +238,8 @@ void gotodeepsleep(int sleeptime)
   (GPIO16 needs to be tied to RST to wake from deepSleep.)*/
   #ifdef DEBUG
     ESP.deepSleep(sleeptime*1e6,WAKE_RF_DEFAULT);
-    delay(sleeptime*1e3);
-    ESP.reset();
+//    delay(sleeptime*1e3);
+//    ESP.reset();
   #else
     ESP.deepSleep(sleeptime*1e6,WAKE_RF_DEFAULT);
   #endif
