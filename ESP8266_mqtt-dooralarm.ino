@@ -1,4 +1,6 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
 
@@ -6,7 +8,7 @@
 #include "debug.h"
 
 const int sleepTimeS = 1;       // Time in Deep-Sleep between checks
-unsigned long loopTimeS = 5;    // Time between checks when door ist open
+unsigned long loopTimeS = 5;    // Time between checks when door is open
 volatile int buttoncounter = 0;
 volatile bool alarm = false;
 volatile bool unarm = false;
@@ -30,8 +32,8 @@ void setup()
 
   pinMode(REEDPIN, INPUT);
   pinMode(BUZZERPIN, OUTPUT);
-  digitalWrite(BUZZERPIN, LOW);
-  pinMode(BUTTONPIN, INPUT_PULLUP);
+  digitalWrite(BUZZERPIN, HIGH);
+  pinMode(BUTTONPIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BUTTONPIN), button_ISR, FALLING);
 
   dbprint("Reed: ");
@@ -73,7 +75,7 @@ void loop()
       if(!digitalRead(REEDPIN))
       {
         dbprintln("still open");
-        client.publish(REED_TOPIC, "open", true);
+        client.publish(REED_TOPIC, "open", false);
       }
     }
     
@@ -93,9 +95,16 @@ void loop()
   {
     client.publish(ARM_TOPIC, "0", true);
   }
+
+  digitalWrite(BUZZERPIN, 0);
+  dbprintln("door closed, no alarm");
+  client.publish(REED_TOPIC, "closed", false);
+  client.publish(BATTERY_TOPIC, String(ESP.getVcc()*VCC_ADJ/1024.00).c_str(), false);
+  client.loop();
   
   if(buttoncounter > 5)
   {
+    client.publish("maindoor/debug/status", "OTA start", false);
     dbprintln("Button at least 5 times pressed, starting OTA");
     setup_ota();
     last = millis();
@@ -106,13 +115,8 @@ void loop()
       delay(200);
     }
     dbprintln("waited 60 seconds, ending OTA");
+    client.publish("maindoor/debug/status", "OTA end", false);
   }
-
-  digitalWrite(BUZZERPIN, 0);
-  dbprintln("door closed, no alarm");
-  client.publish(REED_TOPIC, "closed", true);
-  client.publish(BATTERY_TOPIC, String(ESP.getVcc()*VCC_ADJ/1024.00).c_str(), true);
-  client.loop();
   
   delay(50);
   gotodeepsleep(sleepTimeS);

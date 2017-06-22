@@ -1,22 +1,23 @@
 // Setup
-#define DEFAULT_SSID      "ssid"           // Enter your network SSID
-#define DEFAULT_PASSWORD  "pwd"            // Enter your network WPA key
-#define DEFAULT_HOSTNAME  "maindoor"       // Enter your device friendly name
+#define DEFAULT_SSID      "ssid"		// Enter your network SSID
+#define DEFAULT_PASSWORD  "pwd"			// Enter your network WPA key
+#define DEFAULT_HOSTNAME  "maindoor"	// Enter your device friendly name
 
-#define MQTT_SERVER       "server"
-#define MQTT_USER         "user"
-#define MQTT_PASSWORD     "pwd"
+#define MQTT_SERVER       "server"		// Enter Hostname or IP of MQTT-Server
+#define MQTT_USER         "user"		// Enter Username for MQTT Connection
+#define MQTT_PASSWORD     "pwd"			// Enter Password for MQTT Connection
 
 #define REED_TOPIC        "maindoor/reed/switch"
 #define BATTERY_TOPIC     "maindoor/battery/analog"
 #define ARM_TOPIC         "maindoor/arm/cmd"
 
-#define VCC_ADJ  1.225
+#define VCC_ADJ  1.000    // Adjust Voltage output of ADC to measured Voltage
 
 // Pin Setup
-#define REEDPIN 4     // D2 -- needs Pull-Down
-#define BUZZERPIN 14  // D5 -- needs Pull-Down
-#define BUTTONPIN 0   // D3 -- uses internal Pull-Up
+#define REEDPIN   3   // needs external Pull-Down
+#define BUZZERPIN 1   // does not start with Pull-Down
+#define BUTTONPIN 0   // HIGH to boot, needs external Pull-Up
+//                2   // HIGH to boot, needs external Pull-Up
 
 // Debugging
 #define DEBUG
