@@ -1,23 +1,26 @@
-// Setup
-#define DEFAULT_SSID      "ssid"		// Enter your network SSID
-#define DEFAULT_PASSWORD  "pwd"			// Enter your network WPA key
-#define DEFAULT_HOSTNAME  "maindoor"	// Enter your device friendly name
+// Wifi-Setup
+#define DEFAULT_SSID      "ssid"      // Enter your network SSID
+#define DEFAULT_PASSWORD  "pwd"       // Enter your network WPA key
+#define DEFAULT_HOSTNAME  "maindoor"  // Enter your device friendly name
 
-#define MQTT_SERVER       "server"		// Enter Hostname or IP of MQTT-Server
-#define MQTT_USER         "user"		// Enter Username for MQTT Connection
-#define MQTT_PASSWORD     "pwd"			// Enter Password for MQTT Connection
+// MQTT-Setup
+#define MQTT_SERVER       "server"    // Enter Hostname or IP of MQTT-Server
+#define MQTT_USER         "user"      // Enter Username for MQTT Connection
+#define MQTT_PASSWORD     "pwd"       // Enter Password for MQTT Connection
 
+// MQTT-Topics
 #define REED_TOPIC        "maindoor/reed/switch"
 #define BATTERY_TOPIC     "maindoor/battery/analog"
 #define ARM_TOPIC         "maindoor/arm/cmd"
 
+// ADC-Setup
 #define VCC_ADJ  1.000    // Adjust Voltage output of ADC to measured Voltage
 
-// Pin Setup
+// Pin-Setup
 #define REEDPIN   3   // needs external Pull-Down
 #define BUZZERPIN 1   // does not start with Pull-Down
 #define BUTTONPIN 0   // HIGH to boot, needs external Pull-Up
-//                2   // HIGH to boot, needs external Pull-Up
+//            GPIO2   // HIGH to boot, needs external Pull-Up
 
 // Debugging
-#define DEBUG
+//#define DEBUG       // not working on ESP-01 as UART-Pins are used
