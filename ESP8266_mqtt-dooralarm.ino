@@ -96,7 +96,7 @@ void loop()
     client.publish(ARM_TOPIC, "0", true);
   }
 
-  digitalWrite(BUZZERPIN, 0);
+  digitalWrite(BUZZERPIN, HIGH);
   dbprintln("door closed, no alarm");
   client.publish(REED_TOPIC, "closed", false);
   client.publish(BATTERY_TOPIC, String(ESP.getVcc()*VCC_ADJ/1024.00).c_str(), false);
@@ -118,7 +118,8 @@ void loop()
     client.publish("maindoor/debug/status", "OTA end", false);
   }
   
-  delay(50);
+  yield();
+  delay(100);
   gotodeepsleep(sleepTimeS);
 }
 //*************** end main *****************************
