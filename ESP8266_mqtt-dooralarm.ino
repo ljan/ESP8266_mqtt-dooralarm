@@ -30,6 +30,7 @@ void setup()
   dbprint("VCC Voltage: ");
   dbprintln(ESP.getVcc()*VCC_ADJ/1024.00f);
 
+  // pin setup
   pinMode(REEDPIN, INPUT);
   pinMode(BUZZERPIN, OUTPUT);
   digitalWrite(BUZZERPIN, HIGH);
@@ -42,6 +43,16 @@ void setup()
     dbprintln("closed, going back to sleep");
     gotodeepsleep(sleepTimeS); // 86 ms to get here
   }
+  
+  dbprintln("open, begin loop");
+  
+  // start wifi
+  setup_wifi();
+  
+  // setup mqtt
+  client.setServer(MQTT_SERVER, 1883);
+  client.setCallback(callback);
+  client.subscribe(ARM_TOPIC);
 }
 //*************** end setup *****************************
 
@@ -51,18 +62,11 @@ void setup()
 // after door is closed publish "0" to reed_topic and batteryvoltage to battery_topic and go back to sleep
 void loop()
 {
-  dbprintln("open, begin loop");
-  // now start wifi
-  setup_wifi();
-
   // connect mqtt
-  client.setServer(MQTT_SERVER, 1883);
-  client.setCallback(callback);
   if (!client.connected())
   {
     reconnect_mqtt();
   }
-  client.subscribe(ARM_TOPIC);
   
   // loop until door is closed
   unsigned long last = millis()+(loopTimeS*1e3);
@@ -88,7 +92,7 @@ void loop()
 
     client.loop();
     yield();
-    delay(10);
+    delay(20);
   } while(!digitalRead(REEDPIN) || alarm || !check);
     
   if(unarm)
@@ -165,7 +169,7 @@ void setup_wifi()
 
 void setup_ota()
 {
-//    ArduinoOTA.setHostname(DEFAULT_HOSTNAME);
+//    ArduinoOTA.setHostname(DEFAULT_HOSTNAME + String("-") + String(ESP.getChipId(), HEX));
 //    ArduinoOTA.setPassword((const char *)"esp8266");
     
     ArduinoOTA.onStart([]()
@@ -243,10 +247,14 @@ void gotodeepsleep(int sleeptime)
   (GPIO16 needs to be tied to RST to wake from deepSleep.)*/
   #ifdef DEBUG
     ESP.deepSleep(sleeptime*1e6,WAKE_RF_DEFAULT);
+    yield();
+    delay(100);
 //    delay(sleeptime*1e3);
 //    ESP.reset();
   #else
     ESP.deepSleep(sleeptime*1e6,WAKE_RF_DEFAULT);
+    yield();
+    delay(100);
   #endif
 }
 
