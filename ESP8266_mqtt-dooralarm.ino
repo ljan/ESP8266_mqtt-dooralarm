@@ -141,7 +141,7 @@ void setup_wifi()
   network-issues with your other WiFi-devices on your WiFi-network. */
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
-  WiFi.hostname(DEFAULT_HOSTNAME);  
+  WiFi.hostname(DEFAULT_HOSTNAME + String("-") + String(ESP.getChipId(), HEX));  
   WiFi.begin(DEFAULT_SSID, DEFAULT_PASSWORD);
   
   dbprint("Connecting to ");
