@@ -15,7 +15,7 @@ volatile bool unarm = false;
 volatile bool check = false;
 
 WiFiClient espClient;
-PubSubClient client(espClient);
+PubSubClient mqttClient(espClient);
 
 ADC_MODE(ADC_VCC);  // Read internal vcc rather than voltage on ADC pin (A0 must be floating)
 
@@ -50,9 +50,8 @@ void setup()
   setup_wifi();
   
   // setup mqtt
-  client.setServer(MQTT_SERVER, 1883);
-  client.setCallback(callback);
-  client.subscribe(ARM_TOPIC);
+  mqttClient.setServer(MQTT_SERVER, 1883);
+  mqttClient.setCallback(callback_mqtt);
 }
 //*************** end setup *****************************
 
@@ -63,9 +62,10 @@ void setup()
 void loop()
 {
   // connect mqtt
-  if (!client.connected())
+  if (!mqttClient.connected())
   {
     reconnect_mqtt();
+    mqttClient.subscribe(ARM_TOPIC);
   }
   
   // loop until door is closed
@@ -79,7 +79,7 @@ void loop()
       if(!digitalRead(REEDPIN))
       {
         dbprintln("still open");
-        client.publish(REED_TOPIC, "open", false);
+        mqttClient.publish(REED_TOPIC, "open", false);
       }
     }
     
@@ -90,25 +90,25 @@ void loop()
       digitalWrite(BUZZERPIN, !digitalRead(BUZZERPIN));
     }
 
-    client.loop();
+    mqttClient.loop();
     yield();
     delay(20);
   } while(!digitalRead(REEDPIN) || alarm || !check);
     
   if(unarm)
   {
-    client.publish(ARM_TOPIC, "0", true);
+    mqttClient.publish(ARM_TOPIC, "0", true);
   }
 
   digitalWrite(BUZZERPIN, HIGH);
   dbprintln("door closed, no alarm");
-  client.publish(REED_TOPIC, "closed", false);
-  client.publish(BATTERY_TOPIC, String(ESP.getVcc()*VCC_ADJ/1024.00).c_str(), false);
-  client.loop();
+  mqttClient.publish(REED_TOPIC, "closed", false);
+  mqttClient.publish(BATTERY_TOPIC, String(ESP.getVcc()*VCC_ADJ/1024.00).c_str(), false);
+  mqttClient.loop();
   
   if(buttoncounter > 5)
   {
-    client.publish("maindoor/debug/status", "OTA start", false);
+    mqttClient.publish("maindoor/debug/status", "OTA start", false);
     dbprintln("Button at least 5 times pressed, starting OTA");
     setup_ota();
     last = millis();
@@ -119,7 +119,7 @@ void loop()
       delay(200);
     }
     dbprintln("waited 60 seconds, ending OTA");
-    client.publish("maindoor/debug/status", "OTA end", false);
+    mqttClient.publish("maindoor/debug/status", "OTA end", false);
   }
   
   yield();
@@ -197,19 +197,19 @@ void setup_ota()
 void reconnect_mqtt()
 {
   // Loop until door is closed
-  while (!client.connected())
+  while (!mqttClient.connected())
   {
     dbprint("Attempting MQTT connection...");
     // Attempt to connect
     // If you do not want to use a username and password, change next line to
-    // if (client.connect("ESP8266Client"))
-    if (client.connect("ESP8266Client", MQTT_USER, MQTT_PASSWORD))
+    // if (mqttClient.connect("ESP8266Client"))
+    if (mqttClient.connect(DEFAULT_HOSTNAME, MQTT_USER, MQTT_PASSWORD))
     {
       dbprintln("connected");
     } else
     {
       dbprint("failed, rc=");
-      dbprint(client.state());
+      dbprint(mqttClient.state());
       dbprintln(" try again in 5 seconds");
       // Wait 5 seconds before retrying
 //      delay(5000);
@@ -218,7 +218,7 @@ void reconnect_mqtt()
   }
 }
 
-void callback(char* topic, byte* payload, unsigned int length)
+void callback_mqtt(char* topic, byte* payload, unsigned int length)
 {
   dbprint("Message arrived [");
   dbprint(topic);
